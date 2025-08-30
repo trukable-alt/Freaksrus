@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freaks R Us - The Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a0b1f, #3c1642);
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+        .card-container {
+            perspective: 1000px;
+        }
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            text-align: center;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card-front {
+            background: linear-gradient(135deg, #4d1d56, #6e2a7a);
+        }
+        .card-back {
+            background: linear-gradient(135deg, #f9fafb, #e5e7eb); /* gray-50 to gray-200 */
+            transform: rotateY(180deg);
+            color: #1a0b1f;
+        }
+        .category-btn {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .category-btn.active {
+            background-color: #f472b6; /* pink-400 */
+            color: #1a0b1f;
+            font-weight: 600;
+            border-color: #f472b6;
+            box-shadow: 0 0 20px rgba(244, 114, 182, 0.6);
+        }
+        .category-btn:not(.active):hover {
+            border-color: rgba(244, 114, 182, 0.7);
+            transform: translateY(-2px);
+        }
+        .main-btn {
+             background: linear-gradient(90deg, #ec4899, #f472b6);
+             transition: all 0.3s ease;
+        }
+        .main-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.7);
+        }
+         .main-btn:disabled {
+            background: #4b5563; /* gray-600 */
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body class="text-white antialiased">
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <header class="text-center mb-6">
+            <h1 class="font-serif text-4xl md:text-6xl font-bold text-pink-300">Freaks R Us</h1>
+            <p class="mt-3 text-lg text-gray-300 max-w-xl">The Perfect Game To Warm Up Your Night 😈</p>
+        </header>
+
+        <div class="w-full max-w-md mx-auto">
+            <!-- Category Selection -->
+            <div id="category-selector" class="mb-6">
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                    <button class="category-btn bg-black/20 p-3 rounded-lg" data-category="Freak Or Drink">Freak Or Drink</button>
+                    <button class="category-btn bg-black/20 p-3 rounded-lg" data-category="Would You Rather">Would You Rather</button>
+                    <button class="category-btn bg-black/20 p-3 rounded-lg" data-category="Tipsy Trivia">Tipsy Trivia</button>
+                    <button class="category-btn bg-black/20 p-3 rounded-lg" data-category="Drink If">Drink If</button>
+                    <button class="category-btn bg-black/20 p-3 rounded-lg" data-category="Truth Or Drink">Truth Or Drink</button>
+                    <button class="category-btn bg-black/20 p-3 rounded-lg" data-category="Quickie Quests">Quickie Quests</button>
+                </div>
+            </div>
+
+            <!-- Card Display -->
+            <div class="card-container h-64 sm:h-72">
+                <div id="card" class="card">
+                    <div class="card-face card-front flex-col">
+                         <div id="card-front-content" class="text-center">
+                            <h2 class="text-2xl font-bold text-pink-200">Ready to Play?</h2>
+                            <p class="mt-2 text-gray-300">Select a category above to start.</p>
+                         </div>
+                    </div>
+                    <div class="card-face card-back">
+                        <p id="card-text" class="text-lg md:text-xl font-semibold"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-6 text-center">
+                <button id="draw-card-btn" class="main-btn text-white font-bold text-lg py-4 px-12 rounded-full shadow-lg">
+                    Draw a Card
+                </button>
+                <p id="deck-status" class="text-center text-sm text-gray-400 mt-3 h-5"></p>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const gameData = {
+      "Freak Or Drink": {
+        "color": "#f472b6",
+        "cards": [
+            "Give your partner a 60-second lap dance.",
+            "Let your partner blindfold you for the next 3 rounds.",
+            "Whisper your absolute naughtiest fantasy in your partner's ear.",
+            "Do a strip tease for the duration of one song.",
+            "Take a body shot off your partner (or drink if you refuse).",
+            "Send a risky text to your partner from across the room.",
+            "Let your partner write a word on your body with their tongue.",
+            "Give your partner a 2-minute massage anywhere they want.",
+            "Roleplay a fantasy scenario for the next 5 minutes.",
+            "Demonstrate your favorite position using your hands.",
+            "Let your partner tie your hands for the next 3 rounds.",
+            "Tell your partner exactly how you want them to touch you right now.",
+            "Remove one item of your partner's clothing with your teeth.",
+            "Let your partner post a suggestive emoji on your latest social media post.",
+            "Talk dirty to your partner for 60 seconds straight.",
+            "Player's choice: Twerk for 30 seconds or take 2 shots.",
+            "Let your partner give you a hickey anywhere they choose.",
+            "Describe your partner's best physical feature in detail.",
+            "Kiss your partner passionately for at least 30 seconds.",
+            "Show your partner the last spicy photo you saved on your phone.",
+            "Lick whipped cream (or a condiment) off your partner's finger.",
+            "Give your partner full control of the remote/music for the next hour.",
+            "Let your partner apply lipstick on you and then kiss their neck.",
+            "Swap an item of clothing with your partner for the next round.",
+            "Confess your biggest turn-on. If you refuse, finish your drink."
+        ]
+      },
+      "Would You Rather": {
+        "color": "#c084fc",
+        "cards": [
+            "Would you rather... be dominant for the entire night or submissive?",
+            "Would you rather... have a quickie in a semi-public place or an hours-long session at home?",
+            "Would you rather... use food in the bedroom or roleplay a fantasy?",
+            "Would you rather... be blindfolded or have your hands tied?",
+            "Would you rather... talk dirty during sex or be praised?",
+            "Would you rather... have sex with the lights on or in complete darkness?",
+            "Would you rather... incorporate a new toy or a new position?",
+            "Would you rather... have morning sex every day for a week or sex every night for a weekend?",
+            "Would you rather... watch porn together or read erotica out loud?",
+            "Would you rather... give a massage or receive one?",
+            "Would you rather... initiate sex every time or have your partner always initiate?",
+            "Would you rather... experiment with temperature play (ice/wax) or light bondage?",
+            "Would you rather... join the mile high club or have sex on a boat?",
+            "Would you rather... film a private sex tape or take spicy photos?",
+            "Would you rather... be the loud one or the quiet one in bed?",
+            "Would you rather... have shower sex or kitchen counter sex?",
+            "Would you rather... only be able to use your mouth or only use your hands on your partner?",
+            "Would you rather... have a threesome or keep it just the two of you forever?",
+            "Would you rather... recreate your first time together or try something you've never done before?",
+            "Would you rather... have a romantic, candle-lit session or a wild, spontaneous one?"
+        ]
+      },
+      "Tipsy Trivia": {
+        "color": "#60a5fa",
+        "cards": [
+            "What is the clitoris's only known function? (Answer: Pleasure). Drink if you get it wrong.",
+            "True or False: Sperm can live inside the female body for up to 5 days. (Answer: True). Drink if you get it wrong.",
+            "On average, how many calories are burned during a 30-minute sex session? (Answer: Around 85-100). Drink if you get it wrong.",
+            "What does 'BDSM' stand for? (Answer: Bondage, Discipline, Sadism, Masochism). Drink if you get it wrong.",
+            "Which historical civilization was one of the first to use condoms? (Answer: Ancient Egyptians). Drink if you get it wrong.",
+            "What percentage of women require clitoral stimulation to orgasm? (Answer: Over 70%). Drink if you get it wrong.",
+            "True or False: The G-spot is scientifically proven to exist in all women. (Answer: False, it's still debated). Drink if you get it wrong.",
+            "What is the name of the sex position manual written in ancient India? (Answer: The Kama Sutra). Drink if you get it wrong.",
+            "What is the most common sexual fantasy for men? (Answer: A threesome). Drink if you get it wrong.",
+            "What is the most common sexual fantasy for women? (Answer: Sex with a stranger/dominant partner). Drink if you get it wrong.",
+            "True or False: Blue balls is a medically recognized condition. (Answer: True, it's called vasocongestion). Drink if you get it wrong.",
+            "What hormone is often called the 'cuddle hormone' and is released during orgasm? (Answer: Oxytocin). Drink if you get it wrong.",
+            "What is the clinical term for a sex addiction? (Answer: Hypersexuality). Drink if you get it wrong.",
+            "Which fruit is a natural aphrodisiac? (Answer: Figs, Bananas, Avocados are all acceptable). Drink if you get it wrong.",
+            "In what year was Viagra first approved for use? (Answer: 1998). Drink if you get it wrong."
+        ]
+      },
+      "Drink If": {
+        "color": "#34d399",
+        "cards": [
+            "Drink if... you've ever used a sex toy.",
+            "Drink if... you've had a sex dream about your partner.",
+            "Drink if... you're currently not wearing underwear.",
+            "Drink if... you've ever had sex outdoors.",
+            "Drink if... you've ever sent a nude.",
+            "Drink if... you've fantasized about a celebrity this week.",
+            "Drink if... you've ever watched porn with a partner.",
+            "Drink if... you've ever lied about an orgasm.",
+            "Drink if... you want to have sex tonight.",
+            "Drink if... you've ever been caught masturbating.",
+            "Drink if... you think your partner is the best you've ever had.",
+            "Drink if... you've ever had a one-night stand.",
+            "Drink if... you've ever had a threesome.",
+            "Drink if... you find your partner's morning voice sexy.",
+            "Drink if... you've ever tried roleplaying.",
+            "Drink if... you've ever done it in your partner's parents' house.",
+            "Drink if... you've ever had a 'friends with benefits' situation.",
+            "Drink if... you've ever been skinny dipping.",
+            "Drink if... you have a hickey on your body right now.",
+            "Drink if... you are the hornier one in the relationship."
+        ]
+      },
+      "Truth Or Drink": {
+        "color": "#fbbf24",
+        "cards": [
+            "What's the biggest turn-on you've never told me about?",
+            "What's the freakiest thought you've ever had about me?",
+            "When was a time you were secretly turned on in public?",
+            "What's your 'hall pass' celebrity?",
+            "What's one thing you're secretly curious to try in bed?",
+            "What's the kinkiest thing you've ever done?",
+            "Rate my kissing on a scale of 1-10 and explain your answer.",
+            "What is your favorite part of my body?",
+            "Have you ever faked an orgasm with me? If so, why?",
+            "What's a secret fantasy you've never shared with anyone?",
+            "What's your go-to porn category?",
+            "How many people have you slept with? (Drink if you don't want to answer)",
+            "What's something you wish I did more of in the bedroom?",
+            "When did you lose your virginity? Tell the story.",
+            "What's the most embarrassing thing that's happened to you during sex?",
+            "What's the riskiest place you've ever masturbated?",
+            "Describe the best orgasm you've ever had.",
+            "What's an assumption you made about me sexually that was totally wrong?",
+            "Who do you think has a higher sex drive, you or me?",
+            "If you could change one thing about our sex life, what would it be?"
+        ]
+      },
+      "Quickie Quests": {
+        "color": "#ef4444",
+        "cards": [
+            "Give your partner 7 kisses, each on a different part of their body.",
+            "Choose a song and slow dance with your partner for its entire duration.",
+            "Recreate the first kiss you ever shared.",
+            "Blindfold your partner and feed them a piece of fruit or chocolate.",
+            "Play rock-paper-scissors. Loser removes one item of clothing.",
+            "Compliment your partner for 60 seconds straight without stopping or repeating yourself.",
+            "Let your partner draw a temporary tattoo on you anywhere they choose.",
+            "Take a shot without using your hands.",
+            "Stare into each other's eyes for 60 seconds without looking away.",
+            "Create a secret, intimate handshake.",
+            "Give your partner a piggyback ride across the room.",
+            "Let your partner lead you around the room blindfolded for one minute.",
+            "Apply chapstick or lipstick and leave a kiss mark somewhere on your partner.",
+            "Take a selfie together making the silliest face possible.",
+            "The first one to laugh has to take a drink. Start a staring contest... now!"
+        ]
+      }
+    };
+    
+    const categorySelector = document.getElementById('category-selector');
+    const drawCardBtn = document.getElementById('draw-card-btn');
+    const card = document.getElementById('card');
+    const cardFrontContent = document.getElementById('card-front-content');
+    const cardText = document.getElementById('card-text');
+    const deckStatus = document.getElementById('deck-status');
+
+    let currentCategory = null;
+    let drawnCards = {};
+
+    // Initialize drawnCards tracker
+    Object.keys(gameData).forEach(category => {
+        drawnCards[category] = [];
+    });
+    
+    function selectCategory(category) {
+        currentCategory = category;
+        // Update button styles
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === category);
+        });
+        
+        card.classList.remove('flipped');
+        drawCardBtn.disabled = false;
+        
+        // Update card front
+        const categoryInfo = gameData[category];
+        cardFrontContent.innerHTML = `
+            <h3 class="font-serif text-3xl" style="color: ${categoryInfo.color};">${category}</h3>
+            <p class="mt-2 text-gray-300">Ready for a challenge?</p>
+        `;
+        
+        updateDeckStatus();
+    }
+    
+    function updateDeckStatus() {
+        if (!currentCategory) {
+            deckStatus.textContent = '';
+            return;
+        }
+        const total = gameData[currentCategory].cards.length;
+        const drawn = drawnCards[currentCategory].length;
+        const remaining = total - drawn;
+        deckStatus.textContent = `${remaining} / ${total} cards left in this deck.`;
+    }
+
+    function drawCard() {
+        if (!currentCategory) return;
+        
+        const cardPool = gameData[currentCategory].cards;
+        let availableIndices = cardPool.map((_, i) => i).filter(i => !drawnCards[currentCategory].includes(i));
+        
+        if (availableIndices.length === 0) {
+            deckStatus.textContent = `You finished the deck! It will now be reshuffled.`;
+            drawnCards[currentCategory] = [];
+            availableIndices = cardPool.map((_, i) => i);
+        }
+
+        const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        drawnCards[currentCategory].push(randomIndex);
+        const newQuestion = cardPool[randomIndex];
+
+        const displayNewQuestion = () => {
+            cardText.textContent = newQuestion;
+            card.classList.add('flipped');
+            updateDeckStatus();
+        };
+
+        if (card.classList.contains('flipped')) {
+            card.classList.remove('flipped');
+            setTimeout(displayNewQuestion, 400); // Wait for the card to flip back
+        } else {
+            displayNewQuestion();
+        }
+    }
+    
+    // --- Event Listeners ---
+    categorySelector.addEventListener('click', (e) => {
+        if (e.target.matches('.category-btn')) {
+            selectCategory(e.target.dataset.category);
+        }
+    });
+
+    drawCardBtn.addEventListener('click', drawCard);
+    
+    // --- Initial State ---
+    drawCardBtn.disabled = true;
+});
+</script>
+
+</body>
+</html>
